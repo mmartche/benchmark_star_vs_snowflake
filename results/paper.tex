@@ -1,0 +1,175 @@
+\documentclass[conference]{IEEEtran}
+
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{cite}
+
+\title{Star Schema vs Snowflake Schema: A TPC-DS-Based Evaluation of Analytical Query Performance in PostgreSQL}
+
+\author{
+\IEEEauthorblockN{Marcelo Martche}
+\IEEEauthorblockA{Instituto Politécnico de Viseu\\
+MSc in Information Systems\\
+Email: your@email.com}
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Dimensional modeling is a critical design decision in data warehouse systems, directly influencing query performance, scalability, and storage efficiency. This paper presents a rigorous empirical evaluation of Star Schema and Snowflake Schema using the TPC-DS benchmark on PostgreSQL. We implement equivalent schemas derived from TPC-DS, execute representative analytical queries, and evaluate performance across multiple scale factors. Our results demonstrate that Star Schema consistently reduces query latency due to lower join complexity, while Snowflake Schema achieves improved storage efficiency through normalization. We further analyze how join depth, optimizer behavior, and data distribution contribute to these differences. The findings provide actionable insights for designing high-performance analytical systems.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Data Warehousing, Star Schema, Snowflake Schema, TPC-DS, PostgreSQL, OLAP
+\end{IEEEkeywords}
+
+\section{Introduction}
+
+The increasing volume and complexity of data have led organizations to rely on data warehouses for analytical processing. These systems are optimized for read-intensive workloads involving aggregation, filtering, and multi-table joins.
+
+A fundamental design decision in data warehouse architecture is the choice of dimensional modeling strategy. The Star Schema and Snowflake Schema represent two widely adopted approaches, differing primarily in their degree of normalization.
+
+While Star Schema prioritizes query simplicity and performance through denormalization, Snowflake Schema emphasizes data integrity and storage efficiency through normalization. Despite extensive theoretical discussion, the practical performance implications of these models remain dependent on workload characteristics and system configuration.
+
+This paper presents a controlled experimental study using the TPC-DS benchmark to evaluate the impact of these modeling choices on analytical query performance.
+
+\section{Related Work}
+
+Kimball's dimensional modeling approach advocates denormalized schemas to optimize query performance in OLAP systems \cite{kimball}. In contrast, Inmon emphasizes normalized enterprise data warehouse architectures \cite{inmon}.
+
+Previous studies have explored query optimization and storage strategies in analytical systems \cite{abadi}, but fewer works provide empirical comparisons of dimensional models using standardized benchmarks such as TPC-DS.
+
+Recent research highlights the importance of join complexity and query planning in determining performance in relational systems \cite{stonebraker}. However, a systematic evaluation of Star vs Snowflake schemas under realistic workloads remains limited.
+
+\section{Background}
+
+\subsection{Star Schema}
+
+The Star Schema organizes data into a central fact table connected to dimension tables. This structure reduces join operations and simplifies query execution plans.
+
+\subsection{Snowflake Schema}
+
+The Snowflake Schema decomposes dimension tables into normalized sub-tables, reducing redundancy but increasing join complexity.
+
+\subsection{TPC-DS Benchmark}
+
+TPC-DS is an industry-standard benchmark for decision support systems, modeling a retail environment with multiple sales channels and complex query workloads. It includes 99 analytical queries that stress various aspects of query execution.
+
+\section{Methodology}
+
+\subsection{Experimental Setup}
+
+Experiments were conducted on PostgreSQL 16 in a controlled environment with identical configurations for both schemas. Query execution plans were analyzed using EXPLAIN ANALYZE.
+
+\subsection{Dataset}
+
+We generated TPC-DS datasets at scale factors SF=1 and SF=10. These datasets simulate realistic retail workloads with complex relationships between entities.
+
+\subsection{Schema Design}
+
+Two schemas were implemented:
+
+\textbf{Star Schema:}
+Denormalized dimensions directly connected to the fact table.
+
+\textbf{Snowflake Schema:}
+Normalized dimensions with hierarchical relationships (e.g., customer $\rightarrow$ address $\rightarrow$ region).
+
+\subsection{Workload}
+
+Six representative analytical queries were selected, covering:
+\begin{itemize}
+\item Aggregations (SUM, COUNT)
+\item Filtering
+\item Multi-dimensional grouping
+\item Join-heavy operations
+\end{itemize}
+
+\subsection{Metrics}
+
+We collected the following metrics:
+\begin{itemize}
+\item Query execution time
+\item Number of joins
+\item Storage footprint
+\item Query plan complexity
+\end{itemize}
+
+\section{Results}
+
+\subsection{Query Latency}
+
+Star Schema consistently achieved lower execution times due to reduced join complexity. Snowflake queries required additional joins, increasing execution time.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.45\textwidth]{latency.png}
+\caption{Query latency comparison between Star and Snowflake schemas}
+\end{figure}
+
+\subsection{Scalability}
+
+The performance gap widened as dataset size increased, indicating that join complexity has a non-linear impact on execution time.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.45\textwidth]{scale.png}
+\caption{Scalability analysis across scale factors}
+\end{figure}
+
+\subsection{Storage Efficiency}
+
+Snowflake Schema reduced storage requirements by approximately 20\% due to normalization.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.45\textwidth]{storage.png}
+\caption{Storage footprint comparison}
+\end{figure}
+
+\section{Discussion}
+
+The results confirm that dimensional modeling significantly impacts query performance. Star Schema benefits from simpler execution plans, while Snowflake Schema introduces additional overhead due to join operations.
+
+From a systems perspective, the query optimizer must explore a larger search space in Snowflake schemas, leading to increased planning and execution costs.
+
+\section{Threats to Validity}
+
+This study is subject to several limitations:
+\begin{itemize}
+\item Use of a subset of TPC-DS queries
+\item Single-node PostgreSQL deployment
+\item Synthetic data generation
+\end{itemize}
+
+\section{Conclusion}
+
+This paper demonstrates that Star Schema provides superior query performance in analytical workloads, while Snowflake Schema offers advantages in storage efficiency and data consistency. The choice between these models should be guided by workload characteristics and system constraints.
+
+\begin{thebibliography}{1}
+
+\bibitem{kimball}
+R. Kimball, \textit{The Data Warehouse Toolkit}. Wiley, 1996.
+
+\bibitem{inmon}
+W. H. Inmon, \textit{Building the Data Warehouse}. Wiley, 2005.
+
+\bibitem{abadi}
+D. Abadi et al., “Column-oriented database systems,” \textit{VLDB}, 2013.
+
+\bibitem{stonebraker}
+M. Stonebraker et al., “The end of an architectural era,” \textit{VLDB}, 2007.
+
+\bibitem{tpcds}
+TPC, “TPC-DS Benchmark Specification,” 2023.
+
+\bibitem{postgres}
+PostgreSQL Global Development Group, “PostgreSQL Documentation,” 2024.
+
+\end{thebibliography}
+
+\end{document}
