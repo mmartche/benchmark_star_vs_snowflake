@@ -191,71 +191,30 @@ git clone https://github.com/databricks/tpcds-kit.git
 cd tpcds-kit/tools
 make
 
-👉 Isso cria o dsdgen
+Isso cria o dsdgen
 
-🔹 3. Gerar dataset (IMPORTANTÍSSIMO)
+3. Gerar dataset (IMPORTANTÍSSIMO)
 Piloto:
 ./dsdgen -scale 1 -dir ~/tpcds_data
 Experimento:
 ./dsdgen -scale 10 -dir ~/tpcds_data
-🔹 4. Criar base de dados
+4. Criar base de dados
 createdb dwbench
 psql dwbench
-🔹 5. Criar tabelas RAW
+5. Criar tabelas RAW
 
 Usa o script que te dei (03_create_raw_tpcds_tables.sql):
 
 psql -d dwbench -f 03_create_raw_tpcds_tables.sql
-🔹 6. Importar dados
+6. Importar dados
 psql -d dwbench -v data_dir="~/tpcds_data" -f 04_load_raw_tpcds_data.sql
 
 Se der erro aqui → 90% é caminho errado.
 
-🔹 7. Criar STAR SCHEMA
+7. Criar STAR SCHEMA
 psql -d dwbench -f 05_build_star_schema_from_tpcds.sql
-🔹 8. Criar SNOWFLAKE SCHEMA
+8. Criar SNOWFLAKE SCHEMA
 psql -d dwbench -f 06_build_snowflake_schema_from_tpcds.sql
-🔹 9. Rodar queries
+9. Rodar queries
 psql -d dwbench -f 07_benchmark_queries_tpcds.sql
-🔹 10. Medir performance REAL
-
-Dentro do psql:
-
-EXPLAIN ANALYZE SELECT ...
-
-OU:
-
-\timing
-📊 O QUE VOCÊ PRECISA COLETAR (PRO PAPER)
-
-Para cada query:
-
-Métrica	Como pegar
-Tempo	EXPLAIN ANALYZE
-Joins	plano de execução
-Storage	pg_total_relation_size
-Linhas	COUNT(*)
-🔥 COMO ISSO ENTRA NO PAPER
-
-Agora conecta com o que você escreveu:
-
-✔ Methodology
-
-Você escreve:
-
-TPC-DS SF=1 e SF=10
-PostgreSQL
-mesmas queries em ambos schemas
-✔ Results
-
-Você coloca:
-
-tabela:
-Query | Star | Snowflake
-Q1    | 120  | 210
-✔ Discussion (IMPORTANTE PRA NOTA)
-
-Você explica:
-
-👉 “Snowflake is slower due to increased join depth”
-👉 “Star reduces execution plan complexity”
+10. Medir performance REAL
