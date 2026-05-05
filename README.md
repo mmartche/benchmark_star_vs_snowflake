@@ -13,13 +13,8 @@ This package gives you a practical, reproducible PostgreSQL implementation of a 
 - `07_benchmark_queries_tpcds.sql` — paired analytical queries for both schemas
 - `08_collect_metrics.sql` — helper SQL to inspect storage footprint and row counts
 - `09_run_benchmark.sh` — optional shell script to automate repeated `EXPLAIN (ANALYZE, BUFFERS)` runs
-- `10_95_ci.py` — opcional caso executou o benchmark, para gerar um intervalo de confiança (95%)
+- `10_95_ci.py` — optional, if the benchmark was executed, to compute a 95% confidence interval
 - `11_run_graph_compare.py` - generate all graphs to compare infos and on documentation
-# 1. BAR CHART (PADRÃO) graph_bar_standard
-# 2. LOG SCALE (CRÍTICO) graph_log_scale
-# 3. SPEEDUP (MAIS IMPORTANTE) graph_speedup
-# 4. DIFERENÇA PERCENTUAL graph_percentage_diff
-
 
 ## Recommended scale factors
 
@@ -51,8 +46,10 @@ TPC-DS can generate many tables, but this package uses a **focused subset** that
 7. Run the benchmark queries with cold/warm repetitions
 8. Collect latency, storage, and scaling results
 
-## Fix tpcds tools files
-- ./tpcds-kit/tools files
+## Fix TPC-DS tools
+
+- (./tpcds-kit/tools)
+On macOS, if you encounter build issues with the main package, you may need to modify the source files located in this directory.
 
 ## Workflow
 ```bash
