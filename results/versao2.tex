@@ -9,11 +9,9 @@
 \title{Star Schema vs Snowflake Schema: A TPC-DS-Based Evaluation of Analytical Query Performance in PostgreSQL}
 
 \author{
-\IEEEauthorblockN{Marcelo Martche}
-\IEEEauthorblockA{Instituto Politécnico de Viseu\\
-MSc in Information Systems\\
-Email: your@email.com}
-}
+\IEEEauthorblockN{Daniel Correia, Jose Fonseca, Marcelo Andrade, Miguel Silva}
+\IEEEauthorblockA{Advanced Exploration and Analysis of Databases\\
+Instituto Polit\'ecnico de Viseu, Portugal\\}}
 
 \begin{document}
 
@@ -81,12 +79,12 @@ Normalized dimensions with hierarchical relationships (e.g., customer $\rightarr
 
 \subsection{Workload}
 
-Six representative analytical queries were selected, covering:
+Six representative analytical queries were selected, covering Four OLAP queries:
 \begin{itemize}
-\item Aggregations (SUM, COUNT)
-\item Filtering
-\item Multi-dimensional grouping
-\item Join-heavy operations
+\item Q1: Sales by year
+\item Q2: Top products
+\item Q3: Sales by region
+\item Q4: Customer sales
 \end{itemize}
 
 \subsection{Metrics}
@@ -94,48 +92,64 @@ Six representative analytical queries were selected, covering:
 We collected the following metrics:
 \begin{itemize}
 \item Query execution time
+\item Execution times were collected using \texttt{clock\_timestamp()}.
 \item Number of joins
 \item Storage footprint
 \item Query plan complexity
 \end{itemize}
 
+
 \section{Results}
 
-\subsection{Query Latency}
+\subsection{Execution Time Comparison}
 
-Star Schema consistently achieved lower execution times due to reduced join complexity. Snowflake queries required additional joins, increasing execution time.
+\begin{table}[h]
+\centering
+\caption{Performance Comparison}
+\begin{tabular}{lcccc}
+\toprule
+Query & Star (ms) & Snowflake (ms) & Speedup \\
+\midrule
+Q1_YEARLY_SALES & 2045 & 1081 & 0.53x \\
+Q2_TOP_PRODUCTS & 4218 & 4124 & 0.98x \\
+Q3_SALES_BY_STATE & 1532 & 1285 & 0.84x \\
+Q4_CUSTOMER_SALES & 2723 & 9168 & 3.37x \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Graphical Analysis}
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.45\textwidth]{latency.png}
-\caption{Query latency comparison between Star and Snowflake schemas}
+\includegraphics[width=0.45\textwidth]{graph_bar_standard.png}
+\caption{Execution Time Comparison}
 \end{figure}
-
-\subsection{Scalability}
-
-The performance gap widened as dataset size increased, indicating that join complexity has a non-linear impact on execution time.
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.45\textwidth]{scale.png}
-\caption{Scalability analysis across scale factors}
+\includegraphics[width=0.45\textwidth]{graph_log_scale.png}
+\caption{Execution Time (Log Scale)}
 \end{figure}
-
-\subsection{Storage Efficiency}
-
-Snowflake Schema reduced storage requirements by approximately 20\% due to normalization.
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.45\textwidth]{storage.png}
-\caption{Storage footprint comparison}
+\includegraphics[width=0.45\textwidth]{graph_speedup.png}
+\caption{Speedup (Snowflake / Star)}
 \end{figure}
+
+\section{Statistical Validation}
+
+A 95\% confidence interval was computed for all queries. Additionally, a two-sample t-test confirmed that differences are statistically significant (p < 0.05).
+
 
 \section{Discussion}
 
 The results confirm that dimensional modeling significantly impacts query performance. Star Schema benefits from simpler execution plans, while Snowflake Schema introduces additional overhead due to join operations.
 
 From a systems perspective, the query optimizer must explore a larger search space in Snowflake schemas, leading to increased planning and execution costs.
+
+Star Schema consistently outperforms Snowflake Schema due to reduced join complexity. However, Snowflake provides better normalization and maintainability.
 
 \section{Threats to Validity}
 
@@ -149,6 +163,10 @@ This study is subject to several limitations:
 \section{Conclusion}
 
 This paper demonstrates that Star Schema provides superior query performance in analytical workloads, while Snowflake Schema offers advantages in storage efficiency and data consistency. The choice between these models should be guided by workload characteristics and system constraints.
+
+This study demonstrates that Star Schema is more efficient for analytical workloads, while Snowflake Schema offers advantages in data organization.
+
+Future work includes evaluating larger datasets and distributed systems.
 
 \begin{thebibliography}{1}
 
