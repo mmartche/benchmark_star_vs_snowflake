@@ -1,5 +1,5 @@
-Presentation Script – Star Schema vs Snowflake Schema
-Star Schema vs Snowflake Schema
+#Presentation Script – Star Schema vs Snowflake Schema
+##Star Schema vs Snowflake Schema
 
 Good morning/afternoon everyone.
 
@@ -10,7 +10,7 @@ To perform this analysis, we used PostgreSQL together with the TPC-DS benchmark,
 
 We implemented both schemas, executed analytical queries, and analyzed the results using statistical validation methods such as confidence intervals and t-tests.
 
-Introduction
+##Introduction
 
 Data warehouses are designed to support analytical queries and business intelligence systems.
 
@@ -20,7 +20,7 @@ The two most common dimensional models are Star Schema and Snowflake Schema.
 
 Star Schema uses denormalized dimensions, while Snowflake Schema normalizes dimensions into multiple related tables.
 
-What is TPC-DS?
+##What is TPC-DS?
 
 TPC-DS is a benchmark created for evaluating analytical database systems.
 
@@ -30,7 +30,7 @@ The benchmark includes large datasets and complex analytical queries that repres
 
 We used TPC-DS because it is widely recognized in both academia and industry, making our evaluation more credible and reproducible.
 
-Star Schema
+##Star Schema
 
 Star Schema is composed of a central fact table connected directly to denormalized dimension tables.
 
@@ -40,7 +40,7 @@ This usually leads to simpler execution plans and lower computational overhead.
 
 However, Star Schema may increase redundancy and storage usage because dimension data is duplicated.
 
-Snowflake Schema
+##Snowflake Schema
 
 Snowflake Schema extends the Star Schema by normalizing dimensions into multiple related tables.
 
@@ -48,7 +48,7 @@ This approach reduces redundancy and improves maintainability and data consisten
 
 However, because dimensions are normalized, analytical queries require additional joins, increasing query complexity and execution cost.
 
-Experimental Setup
+##Experimental Setup
 
 For the experiments, we used PostgreSQL together with the TPC-DS dataset at scale factor 10.
 
@@ -58,7 +58,7 @@ Analytical queries were executed multiple times to ensure reliable measurements.
 
 We also applied statistical validation using confidence intervals and t-tests.
 
-Benchmark Queries
+##Benchmark Queries
 
 We selected four representative analytical queries.
 
@@ -69,7 +69,7 @@ Finally, the fourth analyzes customer-level sales information.
 
 These queries were chosen because they represent common OLAP operations involving aggregations and joins.
 
-Performance Results
+##Performance Results
 
 The results showed that performance depends strongly on query characteristics.
 
@@ -79,7 +79,7 @@ However, in more complex queries involving multiple joins, Star Schema significa
 
 This happens because Star Schema reduces join depth and simplifies execution plans.
 
-Statistical Validation
+##Statistical Validation
 
 To ensure scientific reliability, each query was executed multiple times.
 
@@ -89,7 +89,7 @@ In addition, we applied statistical t-tests to verify whether performance differ
 
 The results confirmed that most differences were statistically significant.
 
-Conclusion
+##Conclusion
 
 In conclusion, dimensional modeling has a measurable impact on analytical query performance.
 
