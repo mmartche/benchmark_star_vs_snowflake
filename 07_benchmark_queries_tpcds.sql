@@ -1,172 +1,290 @@
 -- ============================================================
--- BENCHMARK FINAL: STAR vs SNOWFLAKE
+-- 07_benchmark_queries_tpcds.sql
+-- FINAL VERSION
 -- ============================================================
 
 \set ON_ERROR_STOP on
 
-DISCARD ALL;
-
-SET work_mem = '256MB';
-
--- ============================================================
--- TABELA DE RESULTADOS
--- ============================================================
-
 DROP TABLE IF EXISTS benchmark_results;
 
 CREATE TABLE benchmark_results (
-    id SERIAL PRIMARY KEY,
-    schema_type TEXT,
+    run_id SERIAL PRIMARY KEY,
     query_name TEXT,
-    execution_time_ms NUMERIC
+    schema_type TEXT,
+    execution_time_ms NUMERIC,
+    execution_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ============================================================
--- BLOCO DE MEDIÇÃO
+-- CONFIGURATION
 -- ============================================================
 
 DO $$
 DECLARE
-    t_start TIMESTAMP;
-    t_end TIMESTAMP;
+    i INTEGER;
+    start_time TIMESTAMP;
+    end_time TIMESTAMP;
+    elapsed_ms NUMERIC;
 BEGIN
 
 -- ============================================================
--- Q1: SALES POR ANO
+-- RUN EACH QUERY 10 TIMES
 -- ============================================================
 
--- STAR
-t_start := clock_timestamp();
+FOR i IN 1..10 LOOP
 
-PERFORM d.d_year, SUM(f.sales_price)
-FROM dw_star.fact_store_sales f
-JOIN dw_star.dim_date d ON f.sold_date_key = d.date_key
-GROUP BY d.d_year;
+    -- ========================================================
+    -- Q1 YEARLY SALES (STAR)
+    -- ========================================================
 
-t_end := clock_timestamp();
+    start_time := clock_timestamp();
 
-INSERT INTO benchmark_results(schema_type, query_name, execution_time_ms)
-VALUES ('STAR', 'Q1_YEARLY_SALES', EXTRACT(EPOCH FROM (t_end - t_start)) * 1000);
+    PERFORM d.d_year,
+           SUM(f.net_paid)
+    FROM dw_star.fact_store_sales f
+    JOIN dw_star.dim_date d
+      ON f.sold_date_key = d.date_key
+    GROUP BY d.d_year;
 
--- SNOWFLAKE
-t_start := clock_timestamp();
+    end_time := clock_timestamp();
 
-PERFORM d.d_year, SUM(f.sales_price)
-FROM dw_snowflake.fact_store_sales f
-JOIN dw_snowflake.dim_date d ON f.sold_date_key = d.date_key
-GROUP BY d.d_year;
+    elapsed_ms :=
+        EXTRACT(EPOCH FROM (end_time - start_time)) * 1000;
 
-t_end := clock_timestamp();
+    INSERT INTO benchmark_results(
+        query_name,
+        schema_type,
+        execution_time_ms
+    )
+    VALUES (
+        'Q1_YEARLY_SALES',
+        'STAR',
+        elapsed_ms
+    );
 
-INSERT INTO benchmark_results(schema_type, query_name, execution_time_ms)
-VALUES ('SNOWFLAKE', 'Q1_YEARLY_SALES', EXTRACT(EPOCH FROM (t_end - t_start)) * 1000);
+    -- ========================================================
+    -- Q1 YEARLY SALES (SNOWFLAKE)
+    -- ========================================================
 
--- ============================================================
--- Q2: TOP 10 PRODUTOS
--- ============================================================
+    start_time := clock_timestamp();
 
--- STAR
-t_start := clock_timestamp();
+    PERFORM d.d_year,
+           SUM(f.net_paid)
+    FROM dw_snow_tpcds.fact_store_sales f
+    JOIN dw_snow_tpcds.dim_date d
+      ON f.sold_date_key = d.date_key
+    GROUP BY d.d_year;
 
-PERFORM i.i_item_desc, SUM(f.sales_price)
-FROM dw_star.fact_store_sales f
-JOIN dw_star.dim_item i ON f.item_key = i.item_key
-GROUP BY i.i_item_desc
-ORDER BY SUM(f.sales_price) DESC
-LIMIT 10;
+    end_time := clock_timestamp();
 
-t_end := clock_timestamp();
+    elapsed_ms :=
+        EXTRACT(EPOCH FROM (end_time - start_time)) * 1000;
 
-INSERT INTO benchmark_results VALUES
-(DEFAULT, 'STAR', 'Q2_TOP_PRODUCTS', EXTRACT(EPOCH FROM (t_end - t_start)) * 1000);
+    INSERT INTO benchmark_results(
+        query_name,
+        schema_type,
+        execution_time_ms
+    )
+    VALUES (
+        'Q1_YEARLY_SALES',
+        'SNOWFLAKE',
+        elapsed_ms
+    );
 
--- SNOWFLAKE
-t_start := clock_timestamp();
+    -- ========================================================
+    -- Q2 TOP PRODUCTS (STAR)
+    -- ========================================================
 
-PERFORM i.i_item_desc, SUM(f.sales_price)
-FROM dw_snowflake.fact_store_sales f
-JOIN dw_snowflake.dim_item i ON f.item_key = i.item_key
-JOIN dw_snowflake.dim_category c ON i.category_key = c.category_key
-GROUP BY i.i_item_desc
-ORDER BY SUM(f.sales_price) DESC
-LIMIT 10;
+    start_time := clock_timestamp();
 
-t_end := clock_timestamp();
+    PERFORM item_key,
+           SUM(net_paid)
+    FROM dw_star.fact_store_sales
+    GROUP BY item_key
+    ORDER BY SUM(net_paid) DESC
+    LIMIT 10;
 
-INSERT INTO benchmark_results VALUES
-(DEFAULT, 'SNOWFLAKE', 'Q2_TOP_PRODUCTS', EXTRACT(EPOCH FROM (t_end - t_start)) * 1000);
+    end_time := clock_timestamp();
 
--- ============================================================
--- Q3: SALES POR ESTADO
--- ============================================================
+    elapsed_ms :=
+        EXTRACT(EPOCH FROM (end_time - start_time)) * 1000;
 
--- STAR
-t_start := clock_timestamp();
+    INSERT INTO benchmark_results(
+        query_name,
+        schema_type,
+        execution_time_ms
+    )
+    VALUES (
+        'Q2_TOP_PRODUCTS',
+        'STAR',
+        elapsed_ms
+    );
 
-PERFORM s.s_state, SUM(f.sales_price)
-FROM dw_star.fact_store_sales f
-JOIN dw_star.dim_store s ON f.store_key = s.store_key
-GROUP BY s.s_state;
+    -- ========================================================
+    -- Q2 TOP PRODUCTS (SNOWFLAKE)
+    -- ========================================================
 
-t_end := clock_timestamp();
+    start_time := clock_timestamp();
 
-INSERT INTO benchmark_results VALUES
-(DEFAULT, 'STAR', 'Q3_SALES_BY_STATE', EXTRACT(EPOCH FROM (t_end - t_start)) * 1000);
+    PERFORM i.item_key,
+           SUM(f.net_paid)
+    FROM dw_snow_tpcds.fact_store_sales f
+    JOIN dw_snow_tpcds.dim_item i
+      ON f.item_key = i.item_key
+    GROUP BY i.item_key
+    ORDER BY SUM(f.net_paid) DESC
+    LIMIT 10;
 
--- SNOWFLAKE
-t_start := clock_timestamp();
+    end_time := clock_timestamp();
 
-PERFORM s.s_state, SUM(f.sales_price)
-FROM dw_snowflake.fact_store_sales f
-JOIN dw_snowflake.dim_store s ON f.store_key = s.store_key
-GROUP BY s.s_state;
+    elapsed_ms :=
+        EXTRACT(EPOCH FROM (end_time - start_time)) * 1000;
 
-t_end := clock_timestamp();
+    INSERT INTO benchmark_results(
+        query_name,
+        schema_type,
+        execution_time_ms
+    )
+    VALUES (
+        'Q2_TOP_PRODUCTS',
+        'SNOWFLAKE',
+        elapsed_ms
+    );
 
-INSERT INTO benchmark_results VALUES
-(DEFAULT, 'SNOWFLAKE', 'Q3_SALES_BY_STATE', EXTRACT(EPOCH FROM (t_end - t_start)) * 1000);
+    -- ========================================================
+    -- Q3 SALES BY STATE (STAR)
+    -- ========================================================
 
--- ============================================================
--- Q4: SALES POR CLIENTE
--- ============================================================
+    start_time := clock_timestamp();
 
--- STAR
-t_start := clock_timestamp();
+    PERFORM s.s_state,
+           SUM(f.net_paid)
+    FROM dw_star.fact_store_sales f
+    JOIN dw_star.dim_store s
+      ON f.store_key = s.store_key
+    GROUP BY s.s_state;
 
-PERFORM c.c_first_name, c.c_last_name, SUM(f.sales_price)
-FROM dw_star.fact_store_sales f
-JOIN dw_star.dim_customer c ON f.customer_key = c.customer_key
-GROUP BY c.c_first_name, c.c_last_name
-ORDER BY SUM(f.sales_price) DESC
-LIMIT 20;
+    end_time := clock_timestamp();
 
-t_end := clock_timestamp();
+    elapsed_ms :=
+        EXTRACT(EPOCH FROM (end_time - start_time)) * 1000;
 
-INSERT INTO benchmark_results VALUES
-(DEFAULT, 'STAR', 'Q4_CUSTOMER_SALES', EXTRACT(EPOCH FROM (t_end - t_start)) * 1000);
+    INSERT INTO benchmark_results(
+        query_name,
+        schema_type,
+        execution_time_ms
+    )
+    VALUES (
+        'Q3_SALES_BY_STATE',
+        'STAR',
+        elapsed_ms
+    );
 
--- SNOWFLAKE
-t_start := clock_timestamp();
+    -- ========================================================
+    -- Q3 SALES BY STATE (SNOWFLAKE)
+    -- ========================================================
 
-PERFORM c.c_first_name, c.c_last_name, a.ca_city, SUM(f.sales_price)
-FROM dw_snowflake.fact_store_sales f
-JOIN dw_snowflake.dim_customer c ON f.customer_key = c.customer_key
-JOIN dw_snowflake.dim_customer_address a ON c.address_key = a.address_key
-GROUP BY c.c_first_name, c.c_last_name, a.ca_city
-ORDER BY SUM(f.sales_price) DESC
-LIMIT 20;
+    start_time := clock_timestamp();
 
-t_end := clock_timestamp();
+    PERFORM s.s_state,
+           SUM(f.net_paid)
+    FROM dw_snow_tpcds.fact_store_sales f
+    JOIN dw_snow_tpcds.dim_store s
+      ON f.store_key = s.store_key
+    GROUP BY s.s_state;
 
-INSERT INTO benchmark_results VALUES
-(DEFAULT, 'SNOWFLAKE', 'Q4_CUSTOMER_SALES', EXTRACT(EPOCH FROM (t_end - t_start)) * 1000);
+    end_time := clock_timestamp();
+
+    elapsed_ms :=
+        EXTRACT(EPOCH FROM (end_time - start_time)) * 1000;
+
+    INSERT INTO benchmark_results(
+        query_name,
+        schema_type,
+        execution_time_ms
+    )
+    VALUES (
+        'Q3_SALES_BY_STATE',
+        'SNOWFLAKE',
+        elapsed_ms
+    );
+
+    -- ========================================================
+    -- Q4 CUSTOMER SALES (STAR)
+    -- ========================================================
+
+    start_time := clock_timestamp();
+
+    PERFORM c.customer_key,
+           SUM(f.net_paid)
+    FROM dw_star.fact_store_sales f
+    JOIN dw_star.dim_customer c
+      ON f.customer_key = c.customer_key
+    GROUP BY c.customer_key
+    ORDER BY SUM(f.net_paid) DESC
+    LIMIT 100;
+
+    end_time := clock_timestamp();
+
+    elapsed_ms :=
+        EXTRACT(EPOCH FROM (end_time - start_time)) * 1000;
+
+    INSERT INTO benchmark_results(
+        query_name,
+        schema_type,
+        execution_time_ms
+    )
+    VALUES (
+        'Q4_CUSTOMER_SALES',
+        'STAR',
+        elapsed_ms
+    );
+
+    -- ========================================================
+    -- Q4 CUSTOMER SALES (SNOWFLAKE)
+    -- ========================================================
+
+    start_time := clock_timestamp();
+
+    PERFORM c.customer_key,
+           SUM(f.net_paid)
+    FROM dw_snow_tpcds.fact_store_sales f
+    JOIN dw_snow_tpcds.dim_customer c
+      ON f.customer_key = c.customer_key
+    JOIN dw_snow_tpcds.dim_geo g
+      ON c.geo_key = g.geo_key
+    JOIN dw_snow_tpcds.dim_customer_demo cd
+      ON c.demo_key = cd.demo_key
+    GROUP BY c.customer_key
+    ORDER BY SUM(f.net_paid) DESC
+    LIMIT 100;
+
+    end_time := clock_timestamp();
+
+    elapsed_ms :=
+        EXTRACT(EPOCH FROM (end_time - start_time)) * 1000;
+
+    INSERT INTO benchmark_results(
+        query_name,
+        schema_type,
+        execution_time_ms
+    )
+    VALUES (
+        'Q4_CUSTOMER_SALES',
+        'SNOWFLAKE',
+        elapsed_ms
+    );
+
+END LOOP;
 
 END $$;
 
 -- ============================================================
--- RESULTADOS
+-- SHOW RESULTS
 -- ============================================================
 
 SELECT *
 FROM benchmark_results
-ORDER BY query_name, schema_type;
+ORDER BY query_name,
+         schema_type,
+         run_id;

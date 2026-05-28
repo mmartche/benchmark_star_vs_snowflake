@@ -6,7 +6,7 @@ from scipy import stats
 # =========================
 # LOAD DATA
 # =========================
-df = pd.read_csv("results_multi.csv")
+df = pd.read_csv("./results/results.csv")
 
 # =========================
 # CALCULAR ESTATÍSTICAS

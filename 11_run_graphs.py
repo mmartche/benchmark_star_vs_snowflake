@@ -5,7 +5,7 @@ import numpy as np
 # =========================
 # LOAD DATA
 # =========================
-df = pd.read_csv("results.csv")
+df = pd.read_csv("./results/results.csv")
 
 pivot = df.pivot(index="query_name", columns="schema_type", values="execution_time_ms")
 
